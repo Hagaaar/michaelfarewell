@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>I ♥ Michael — from Mulhouse with love</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #1a2744;
+    --cream: #faf7f2;
+    --gold: #c9a84c;
+    --soft: #e8e0d4;
+  }
+
+  body {
+    background: var(--navy);
+    color: var(--cream);
+    font-family: 'Lato', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* Subtle grain texture */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0;
+  }
+
+  /* Header */
+  header {
+    position: fixed; top: 0; left: 0; right: 0;
+    padding: 1.2rem 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    z-index: 10;
+    background: linear-gradient(to bottom, rgba(26,39,68,0.95) 0%, transparent 100%);
+  }
+
+  .title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    letter-spacing: 0.08em;
+    color: var(--gold);
+  }
+
+  .subtitle {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    margin-top: 0.2rem;
+  }
+
+  .page-counter {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 0.1em;
+  }
+  .page-counter span { color: var(--gold); }
+
+  /* Main viewer */
+  .viewer {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .spread-container {
+    position: relative;
+    max-width: 92vw;
+    max-height: 82vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Book shadow effect */
+  .spread-container::before {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    background: transparent;
+    box-shadow:
+      0 30px 80px rgba(0,0,0,0.6),
+      0 10px 30px rgba(0,0,0,0.4);
+    border-radius: 2px;
+    z-index: 0;
+  }
+
+  .spread {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: contain;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    z-index: 1;
+    border-radius: 2px;
+    pointer-events: none;
+  }
+
+  .spread.active {
+    opacity: 1;
+    pointer-events: auto;
+    position: relative;
+  }
+
+  /* Center spine line */
+  .spine {
+    position: absolute;
+    top: 5%; bottom: 5%;
+    left: 50%;
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.3) 20%, rgba(0,0,0,0.3) 80%, transparent);
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  /* Nav buttons */
+  .nav {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 20;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 1.5rem 1rem;
+    color: rgba(255,255,255,0.3);
+    font-size: 1.8rem;
+    transition: color 0.2s, transform 0.2s;
+    user-select: none;
+  }
+
+  .nav:hover { color: var(--gold); }
+  .nav:active { transform: translateY(-50%) scale(0.92); }
+  .nav.prev { left: 0.5rem; }
+  .nav.next { right: 0.5rem; }
+  .nav:disabled { opacity: 0.1; cursor: default; }
+  .nav:disabled:hover { color: rgba(255,255,255,0.3); }
+
+  /* Progress dots */
+  .dots {
+    position: fixed;
+    bottom: 1.6rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.5rem;
+    z-index: 10;
+  }
+
+  .dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+  }
+
+  .dot.active {
+    background: var(--gold);
+    transform: scale(1.4);
+  }
+
+  /* Keyboard hint */
+  .hint {
+    position: fixed;
+    bottom: 3.2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.2);
+    white-space: nowrap;
+  }
+
+  /* Fullscreen toggle */
+  .fs-btn {
+    position: fixed;
+    bottom: 1.4rem;
+    right: 1.4rem;
+    background: none;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.3);
+    cursor: pointer;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    border-radius: 3px;
+    transition: all 0.2s;
+    z-index: 20;
+  }
+  .fs-btn:hover { color: var(--gold); border-color: var(--gold); }
+
+  @media (max-width: 600px) {
+    .hint { display: none; }
+    .nav { font-size: 1.4rem; padding: 1rem 0.5rem; }
+    .spread-container { max-width: 98vw; max-height: 78vh; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="title">I ♥ Michael</div>
+    <div class="subtitle">from Mulhouse with love</div>
+  </div>
+  <div class="page-counter">
+    <span id="cur">1</span> / <span id="tot"></span>
+  </div>
+</header>
+
+<div class="viewer">
+  <div class="spread-container" id="container">
+    <div class="spine"></div>
+    <!-- spreads injected by JS -->
+  </div>
+</div>
+
+<button class="nav prev" id="prev" onclick="go(-1)">&#8592;</button>
+<button class="nav next" id="next" onclick="go(+1)">&#8594;</button>
+
+<div class="dots" id="dots"></div>
+<div class="hint">← → arrow keys to navigate</div>
+<button class="fs-btn" onclick="toggleFS()">⛶ fullscreen</button>
+
+<script>
+  // ── List your spread filenames here ──
+  const spreads = [
+    'spread_01.jpg',
+    'spread_02.jpg',
+    'spread_03.jpg',
+    'spread_04.jpg',
+    'spread_05.jpg',
+    'spread_06.jpg',
+    'spread_07.jpg',
+    'spread_08.jpg',
+    'spread_09.jpg',
+    'spread_10.jpg',
+    'spread_11.jpg',
+    'spread_12.jpg',
+    'spread_13.jpg',
+    'spread_14.jpg',
+    'spread_15.jpg',
+  ];
+
+  let current = 0;
+  const container = document.getElementById('container');
+  const dotsEl = document.getElementById('dots');
+  const curEl = document.getElementById('cur');
+  const totEl = document.getElementById('tot');
+  totEl.textContent = spreads.length;
+
+  // Build images
+  spreads.forEach((src, i) => {
+    const img = document.createElement('img');
+    img.src = src;
+    img.className = 'spread' + (i === 0 ? ' active' : '');
+    img.alt = `Spread ${i + 1}`;
+    img.draggable = false;
+    container.appendChild(img);
+
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i === 0 ? ' active' : '');
+    dot.onclick = () => goTo(i);
+    dotsEl.appendChild(dot);
+  });
+
+  const imgs = container.querySelectorAll('.spread');
+  const dots = dotsEl.querySelectorAll('.dot');
+
+  function goTo(n) {
+    imgs[current].classList.remove('active');
+    dots[current].classList.remove('active');
+    current = Math.max(0, Math.min(n, spreads.length - 1));
+    imgs[current].classList.add('active');
+    dots[current].classList.add('active');
+    curEl.textContent = current + 1;
+    document.getElementById('prev').disabled = current === 0;
+    document.getElementById('next').disabled = current === spreads.length - 1;
+  }
+
+  function go(dir) { goTo(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft') go(-1);
+    if (e.key === 'ArrowRight') go(+1);
+  });
+
+  // Swipe support
+  let touchX = null;
+  document.addEventListener('touchstart', e => touchX = e.touches[0].clientX);
+  document.addEventListener('touchend', e => {
+    if (touchX === null) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1);
+    touchX = null;
+  });
+
+  function toggleFS() {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+  }
+
+  goTo(0);
+</script>
+</body>
+</html>
