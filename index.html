@@ -67,11 +67,12 @@
   }
   .page-counter span { color: var(--gold); }
 
-  /* Main viewer */
+  /* Main viewer — pushed down to clear the header */
   .viewer {
     position: relative;
     width: 100vw;
-    height: 100vh;
+    height: calc(100vh - 80px);
+    margin-top: 80px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -80,11 +81,22 @@
   .spread-container {
     position: relative;
     max-width: 92vw;
-    max-height: 82vh;
+    max-height: calc(100vh - 150px);
     display: flex;
     align-items: center;
     justify-content: center;
   }
+
+  /* Click zones: left half = prev, right half = next */
+  .click-zone {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 50%;
+    z-index: 5;
+    cursor: pointer;
+  }
+  .click-zone.left  { left: 0;  cursor: w-resize; }
+  .click-zone.right { right: 0; cursor: e-resize; }
 
   /* Book shadow effect */
   .spread-container::before {
@@ -195,7 +207,7 @@
   @media (max-width: 600px) {
     .hint { display: none; }
     .nav { font-size: 1.4rem; padding: 1rem 0.5rem; }
-    .spread-container { max-width: 98vw; max-height: 78vh; }
+    .spread-container { max-width: 98vw; max-height: calc(100vh - 150px); }
   }
 </style>
 </head>
@@ -214,6 +226,8 @@
 <div class="viewer">
   <div class="spread-container" id="container">
     <div class="spine"></div>
+    <div class="click-zone left"  onclick="go(-1)"></div>
+    <div class="click-zone right" onclick="go(+1)"></div>
     <!-- spreads injected by JS -->
   </div>
 </div>
